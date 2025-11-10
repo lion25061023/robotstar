@@ -21,7 +21,7 @@ int main(void)
 	OLED_Init();
 	pwm_init();
 	Serial_Init();
-	Timer_3_init();
+	//Timer_3_init();
 	for (int i=1;i<=4;i++)
 	{
 		OLED_ShowNum(i,1,i,1);
@@ -34,14 +34,16 @@ int main(void)
 	
 		if (Serial_RxFlag == 1)		//如果接收到数据包
 		{
+			
 			for (int i=0;i<4;i++)
 			{
 				led_num[i]=0;
 			}
 			
-			sscanf(Serial_RxPacket,"%[^:]:%s,%d",order,led_str_num,&led_light);
-			
-			for (int i=0;i<4;i++)
+			sscanf(Serial_RxPacket,"%[^:]:%d,%s",order,&led_light,led_str_num);
+			OLED_ShowString(1,8,led_str_num);
+			int len=strlen(led_str_num);
+			for (int i=0;i<len;i++)
 			{
 				if (led_str_num[i]=='1')
 				{
@@ -67,8 +69,12 @@ int main(void)
 			{
 				if (led_num[i]==1)
 				{
-					//OLED_ShowString(i+1,3,"    ");
-					OLED_ShowNum(i,3,led_light,4);
+					if (i==0) pwm_setcompare1(led_light);
+					if (i==1) pwm_setcompare2(led_light);
+					if (i==2) pwm_setcompare3(led_light);
+					if (i==3) pwm_setcompare4(led_light);
+					OLED_ShowString(i+1,3,"    ");
+					OLED_ShowNum(i+1,3,led_light,4);
 					pwm_setcompare1(led_light);
 				}
 			}
