@@ -7,13 +7,12 @@
 #include <stdio.h>
 #include <string.h> 
 
-//频率调整参数(先不考虑亮度吧)
-int led_fre;
-char order_fr[100];
-char led_fr_str[4];
-int led_fr_num[4];
-//亮度调整参数
+
+
+
+//一条指令调节亮度与频率
 int led_light;
+int led_fre;
 char order[100];
 char led_str_num[4];
 int led_num[4];
@@ -33,20 +32,21 @@ int main(void)
 	
 	while (1)
 	{
-		pwm_setcompare1(1000);
-		pwm_setcompare2(1000);
-		pwm_setcompare3(1000);
-		pwm_setcompare4(1000);
+		
 		if (Serial_RxFlag == 1)		//如果接收到数据包
 		{
-			if (Serial_RxPacket[4]=='l')
-			{
-				for (int i=0;i<4;i++)
+			
+				
+			for (int i=0;i<4;i++)
 			{
 				led_num[i]=0;
 			}
+			pwm_setcompare1(0);
+			pwm_setcompare2(0);
+			pwm_setcompare3(0);
+			pwm_setcompare4(0);
 			
-			sscanf(Serial_RxPacket,"%[^:]:%d,%s",order,&led_light,led_str_num);
+			sscanf(Serial_RxPacket,"%[^:]:%d,%d,%s",order,&led_light,&led_fre,led_str_num);
 			
 			int len=strlen(led_str_num);
 			for (int i=0;i<len;i++)
@@ -71,56 +71,22 @@ int main(void)
 				
 				
 			}
-			for (int i=0;i<4;i++)
-			{
-				if (led_num[i]==1)
-				{
-					if (i==0) pwm_setcompare1(led_light);
-					if (i==1) pwm_setcompare2(led_light);
-					if (i==2) pwm_setcompare3(led_light);
-					if (i==3) pwm_setcompare4(led_light);
-					OLED_ShowString(i+1,3,"    ");
-					OLED_ShowNum(i+1,3,led_light,4);
-					pwm_setcompare1(led_light);
-				}
-			}
-			}
+			// for (int i=0;i<4;i++)
+			// {
+			// 	if (led_num[i]==1)
+			// 	{
+			// 		if (i==0) pwm_setcompare1(led_light);
+			// 		if (i==1) pwm_setcompare2(led_light);
+			// 		if (i==2) pwm_setcompare3(led_light);
+			// 		if (i==3) pwm_setcompare4(led_light);
+			// 		OLED_ShowString(i+1,3,"    ");
+			// 		OLED_ShowNum(i+1,3,led_light,4);
+			// 		pwm_setcompare1(led_light);
+			// 	}
+			// }
 			
-			else if (Serial_RxPacket[4]=='f')
-			{
-//				for (int i=0;i<4;i++)
-//				{
-//				led_fr_num[i]=0;
-//				}
-				OLED_ShowNum(1,8,led_fr_num[0],1);
-				OLED_ShowString(3,7,led_fr_str);
-				sscanf(Serial_RxPacket,"%[^:]:%d,%s",order,&led_fre,led_fr_str);
-				int len=strlen(led_fr_str);
-				for (int i=0;i<len;i++)
-				{
-				if (led_fr_str[i]=='1')
-				{
-					led_fr_num[0]=1;
-				}
-				else if(led_fr_str[i]=='2')
-				{
-					led_fr_num[1]=1;
-				}
-				else if(led_fr_str[i]=='3')
-				{
-					led_fr_num[2]=1;
-				}
-				else if(led_fr_str[i]=='4')
-				{
-					led_fr_num[3]=1;
-				}
-				
-				
-				
-				}
-				
-				
-			}
+			
+		
 			
 				Serial_RxFlag = 0;	
 		}
@@ -137,21 +103,37 @@ void TIM3_IRQHandler (void)
 	if (TIM_GetITStatus(TIM3,TIM_IT_Update)==SET)
 	{
 		count++;
-		if (count<=100)
+		if (count<100)
 		{
 			if (count<=led_fre)
 			{
 				for (int i=0;i<4;i++)
 				{
-					if (led_fr_num[i]==1)
+					if (led_num[i]==1)
 					{
-						if (i==0) pwm_setcompare1(1000);
-						if (i==1) pwm_setcompare2(1000);
-						if (i==2) pwm_setcompare3(1000);
-						if (i==3) pwm_setcompare4(1000);
+						if (i==0) pwm_setcompare1(led_light);
+						if (i==1) pwm_setcompare2(led_light);
+						if (i==2) pwm_setcompare3(led_light);
+						if (i==3) pwm_setcompare4(led_light);
 						OLED_ShowString(i+1,3,"    ");
-						OLED_ShowNum(i+1,3,led_fre,4);
+						OLED_ShowNum(i+1,3,led_fre,3);
+						OLED_ShowString(i+1,7,"    ");
+						OLED_ShowNum(i+1,7,led_light,4);
 						
+						
+					}
+				}
+			}
+			else
+			{
+			for (int i=0;i<4;i++)
+				{
+					if (led_num[i]==1)
+					{
+						if (i==0) pwm_setcompare1(0);
+						if (i==1) pwm_setcompare2(0);
+						if (i==2) pwm_setcompare3(0);
+						if (i==3) pwm_setcompare4(0);
 						
 					}
 				}
@@ -161,17 +143,7 @@ void TIM3_IRQHandler (void)
 		else
 		{
 			count=0;
-			for (int i=0;i<4;i++)
-				{
-					if (led_fr_num[i]==1)
-					{
-						if (i==0) pwm_setcompare1(0);
-						if (i==1) pwm_setcompare2(0);
-						if (i==2) pwm_setcompare3(0);
-						if (i==3) pwm_setcompare4(0);
-						
-					}
-				}
+			
 		}
 		
 		//手动清除中断标志位
